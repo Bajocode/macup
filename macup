@@ -1,0 +1,108 @@
+#!/bin/sh
+
+trap 'ret=$?; test $ret -ne 0 && printf "macup failed\n\n" >&2; exit $ret' EXIT
+
+echo_br() {
+  local fmt="$1"; shift
+  printf "\\n••• $fmt\\n" "$@"
+}
+
+install_xcode_cli() {
+  echo_br "Checking xcode cli tools ..."
+  xcode-select -p &> /dev/null
+  if [ $? -ne 0 ]; then
+    echo_br "Xcode cli tools not found, installing ..."
+    touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress;
+    PROD=$(softwareupdate -l |
+      grep "\*.*Command Line" |
+      head -n 1 | awk -F"*" '{print $2}' |
+      sed -e 's/^ *//' |
+      tr -d '\n')
+    softwareupdate -i "$PROD" -v;
+  else
+    echo_br "Xcode cli tools already installed"
+  fi
+}
+
+install_homebrew() {
+  local brew_prefix="/usr/local"
+
+  if [ -d "$brew_prefix" ]; then
+    if ! [ -r "$brew_prefix" ]; then
+        sudo chown -R "$LOGNAME:admin" /usr/local 
+    fi
+  else
+    sudo mkdir "$brew_prefix"
+    sudo chflags norestricted "$brew_prefix"
+    sudo chown -R "$LOGNAME:admin" "$brew_prefix"
+  fi
+
+  if ! command -v brew >/dev/null; then
+    echo_br "Installing Homebrew ..."
+    curl -fsS 'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
+    export PATH="/usr/local/bin:$PATH"
+  else
+    echo_br "Homebrew already installed ..."
+  fi
+
+  if brew list | grep -Fq brew-cask; then
+    echo_br "Uninstalling old Homebrew-Cask ..."
+    brew uninstall --force brew-cask
+  else
+    echo_br "No old Homebrew-Cask to uninstall ..."
+  fi
+
+  brew update --force
+}
+
+update_formulae() {
+brew bundle --file=- <<EOF
+cask_args appdir: '/Applications'
+
+tap "homebrew/services"
+tap "caskroom/cask"
+
+brew "git"
+brew "tmux"
+brew "python"
+brew "vim"
+brew "zsh"
+brew "kubernetes-cli"
+brew "nvm"
+brew "mongodb", restart_service: :changed
+brew "redis", restart_service: :changed
+
+cask "google-chrome"
+cask "visual-studio-code"
+cask "webstorm"
+cask "iterm2"
+cask "github"
+cask "alfred"
+cask "amethyst"
+cask "fastlane"
+cask "dropbox"
+cask "docker"
+cask "virtualbox"
+cask "java"
+cask "charles"
+cask "spotify"
+EOF
+}
+
+configure_vim() {
+  if [ ! -d "$HOME/.vim_runtime" ]; then
+    git clone --depth=1 https://github.com/amix/vimrc.git ~/.vim_runtime
+    sh ~/.vim_runtime/install_awesome_vimrc.sh
+  else
+    echo_br "Awesome vim already configured ..."
+  fi
+}
+
+defaults write NSGlobalDomain KeyRepeat -int 0
+install_xcode_cli
+install_homebrew
+update_formulae
+configure_vim
+
+# install node
+# install ohmyzsh
