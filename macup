@@ -219,6 +219,7 @@ configure_macos_defaults
 install_xcode_cli
 install_homebrew
 update_formulae
+configure_dotfiles
 configure_vim
 create_shellconfig
 install_node
