@@ -2,44 +2,64 @@
 
 trap 'ret=$?; test $ret -ne 0 && printf "macup failed\n\n" >&2; exit $ret' EXIT
 
-echo_br() {
+ESC_SEQ="\x1b["
+COL_RESET=$ESC_SEQ"39;49;00m"
+COL_GREEN=$ESC_SEQ"32;01m"
+COL_BLUE=$ESC_SEQ"34;01m"
+
+echo_do() {
   local fmt="$1"; shift
-  printf "\\n••• $fmt\\n" "$@"
+  printf "\\n$COL_GREEN"△"$COL_RESET $fmt\\n" "$@"
+}
+
+echo_ok() {
+  echo -e "\n\nok $COL_GREEN"▼"$COL_RESET"
 }
 
 prompt_password() {
-  if ! sudo grep -q "%wheel		ALL=(ALL) NOPASSWD: ALL #atomantic/dotfiles" "/etc/sudoers"; then
+  echo_do "Enter your sudo password once for the entire script"
+  sudo -v
 
-    echo_br "Enter your sudo password once for the entire script"
-    sudo -v
-
-    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-  fi
+  while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 }
 
 configure_macos_defaults() {
-  defaults write NSGlobalDomain KeyRepeat -int 0                      # ultra keyrepeat
-  defaults write com.apple.dock launchanim -bool false                # don’t animate opening applications from the Dock     
-  defaults write com.apple.dock mineffect -string "scale"             # change minimize/maximize window effect to scale
-  defaults write com.apple.finder AppleShowAllFiles -bool true        # show hidden files by default
-  defaults write com.apple.dock tilesize -int 36                      # set the icon size of Dock items to 36 pixels
-  defaults write com.apple.dock launchanim -bool false                # don’t animate opening applications from the Dock
-  defaults write com.apple.dock autohide -bool true                   # automatically hide and show the Dock
-  defaults write com.apple.dock autohide-delay -float 0               # remove the auto-hiding Dock delay
-  defaults write com.apple.dock expose-animation-duration -float 0.1  # speed up Mission Control animations
-  defaults write com.apple.dashboard mcx-disabled -bool true          # disable dashboard
-  chflags nohidden ~/Library                                          # show the ~/Library folder
-  defaults write com.apple.terminal FocusFollowsMouse -bool true      # hover over a window and start typing in it without clicking first
-  
-  # reset 
+  echo_do "Configuring macOS defaults"
+
+  sudo nvram boot-args="-v"                                                               # always boot in verbose mode (not MacOS GUI mode)
+  sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist             # allow 'locate' command (track down every instance of a file)
+  defaults write com.apple.LaunchServices LSQuarantine -bool false                        # disable the “Are you sure you want to open this application?" dialog
+  chflags nohidden ~/Library                                                              # show the ~/Library folder
+  defaults write com.apple.finder AppleShowAllFiles -bool true                            # show hidden files by default
+  defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false              # disable the warning when changing a file extension
+  defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true   # enable tap to click for this user and for the login screen
+  defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1           # ^
+  defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1                        # ^
+  defaults write NSGlobalDomain KeyRepeat -int 2                                          # ultra keyrepeat
+  defaults write NSGlobalDomain InitialKeyRepeat -int 10                                  # ^      
+  defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false           # disable smart quotes as they’re annoying when typing code
+  defaults -currentHost write com.apple.screensaver idleTime 0                            # disable screensaver
+  defaults write NSGlobalDomain com.apple.springing.enabled -bool true                    # enable spring loading for directories
+  defaults write NSGlobalDomain com.apple.springing.delay -float 0                        # remove the spring loading delay for directories
+  defaults write com.apple.dock launchanim -bool false                                    # don’t animate opening applications from the Dock     
+  defaults write com.apple.dock mineffect -string "scale"                                 # change minimize/maximize window effect to scale
+  defaults write com.apple.dock tilesize -int 36                                          # set the icon size of Dock items to 36 pixels
+  defaults write com.apple.dock launchanim -bool false                                    # don’t animate opening applications from the Dock
+  defaults write com.apple.dock autohide -bool true                                       # automatically hide and show the Dock
+  defaults write com.apple.dock autohide-delay -float 0                                   # remove the auto-hiding Dock delay
+  defaults write com.apple.dock expose-animation-duration -float 0.1                      # speed up Mission Control animations
+  defaults write com.apple.dashboard mcx-disabled -bool true                              # disable dashboard
+  defaults write com.apple.terminal FocusFollowsMouse -bool true                          # hover over a window and start typing in it without clicking first
   killall -9 Dock
+
+  echo_ok
 }
 
 install_xcode_cli() {
-  echo_br "Checking xcode cli tools ..."
+  echo_do "Checking xcode cli tools ..."
   xcode-select -p &> /dev/null
   if [ $? -ne 0 ]; then
-    echo_br "Xcode cli tools not found, installing ..."
+    echo_do "Xcode cli tools not found, installing ..."
     touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress;
     PROD=$(softwareupdate -l |
       grep "\*.*Command Line" |
@@ -48,7 +68,7 @@ install_xcode_cli() {
       tr -d '\n')
     softwareupdate -i "$PROD" -v;
   else
-    echo_br "Xcode cli tools already installed"
+    echo_do "Xcode cli tools already installed"
   fi
 }
 
@@ -66,24 +86,27 @@ install_homebrew() {
   fi
 
   if ! command -v brew >/dev/null; then
-    echo_br "Installing Homebrew ..."
+    echo_do "Installing Homebrew ..."
     curl -fsS 'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
     export PATH="/usr/local/bin:$PATH"
   else
-    echo_br "Homebrew already installed ..."
+    echo_do "Homebrew already installed ..."
   fi
 
   if brew list | grep -Fq brew-cask; then
-    echo_br "Uninstalling old Homebrew-Cask ..."
+    echo_do "Uninstalling old Homebrew-Cask ..."
     brew uninstall --force brew-cask
   else
-    echo_br "No old Homebrew-Cask to uninstall ..."
+    echo_do "No old Homebrew-Cask to uninstall ..."
   fi
 
   brew update --force
+
+  echo_ok
 }
 
 update_formulae() {
+  echo_do "Install brew formulae"
 brew bundle --file=- <<EOF
 cask_args appdir: '/Applications'
 
@@ -110,20 +133,24 @@ cask "java"
 cask "charles"
 cask "spotify"
 EOF
+  echo_ok
 }
 
 configure_vim() {
+  echo_do "Configure vim"
   if [ ! -d "$HOME/.vim_runtime" ]; then
     git clone --depth=1 https://github.com/amix/vimrc.git $HOME/.vim_runtime
     sh ~/.vim_runtime/install_awesome_vimrc.sh
     git clone https://github.com/VundleVim/Vundle.vim.git $HOME/.vim_runtime/my_plugins/Vundle.vim
     vim +PluginInstall +qall
   else
-    echo_br "Awesome vim already configured ..."
+    echo_do "Awesome vim already configured ..."
   fi
+  echo_ok
 }
 
 create_shellconfig() {
+  echo_do "Create shell config at ~/shell and source it in ~/.zshrs"
 cat <<EOF > $HOME/.shell
 #!/bin/zsh
 
@@ -131,17 +158,21 @@ cat <<EOF > $HOME/.shell
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 EOF
   echo "source $HOME/.shell" > $HOME/.zshrc
+  echo_ok
 }
 
 install_node() {
+  echo_do "Install node with nvm"
   curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
   source "$HOME/.zshrc"
   nvm install node
   nvm use node
   nvm alias default node
+  echo_ok
 }
 
 install_ohmyzsh() {
+  echo_do "Install Oh My Zsh"
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 }
 
@@ -155,4 +186,4 @@ create_shellconfig
 install_node
 install_ohmyzsh
 
-echo_br "Done ..."
+echo_ok
