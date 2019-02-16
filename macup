@@ -141,6 +141,46 @@ EOF
   echo_ok
 }
 
+create_shellconfig() {
+  echo_do "Create shell config at ~/shell and source it in ~/.zshrs"
+
+cat <<EOF > $HOME/.shell
+#!/bin/zsh
+
+# add commonly used folders to $PATH
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+# add aliases
+source $HOME/aliases
+EOF
+  echo "source $HOME/.shell" > $HOME/.zshrc
+  source $HOME/.zshrc
+  echo_ok
+}
+
+# dot() {
+#   /usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME $@
+# }
+
+configure_dotfiles() {
+  git clone --bare git@github.com:Bajocode/dotfiles.git $HOME/.dotfiles
+  echo ".dotfiles" >> $HOME/.gitignore
+  mkdir -p .dotfiles-backup
+  dot checkout
+  
+  if [ $? = 0 ]; then
+    echo_do "Checked out config ...";
+  else
+    echo_do "Backing up pre-existing .dotfiles ...";
+    dot checkout 2>&1 | egrep "\s+\." | awk {'print $1'} | xargs -I{} mv {} .dotfiles-backup/{}
+  fi;
+  
+  dot checkout
+  dot config status.showUntrackedFiles no
+
+  echo_ok
+}
+
 configure_vim() {
   echo_do "Configure vim"
 
@@ -152,20 +192,6 @@ configure_vim() {
   else
     echo_do "Awesome vim already configured ..."
   fi
-
-  echo_ok
-}
-
-create_shellconfig() {
-  echo_do "Create shell config at ~/shell and source it in ~/.zshrs"
-
-cat <<EOF > $HOME/.shell
-#!/bin/zsh
-
-# add commonly used folders to $PATH
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-EOF
-  echo "source $HOME/.shell" > $HOME/.zshrc
 
   echo_ok
 }
