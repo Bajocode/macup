@@ -5,15 +5,14 @@ trap 'ret=$?; test $ret -ne 0 && printf "macup failed\n\n" >&2; exit $ret' EXIT
 ESC_SEQ="\x1b["
 COL_RESET=$ESC_SEQ"39;49;00m"
 COL_GREEN=$ESC_SEQ"32;01m"
-COL_BLUE=$ESC_SEQ"34;01m"
 
 echo_do() {
   local fmt="$1"; shift
-  printf "\\n$COL_GREEN"△"$COL_RESET $fmt\\n" "$@"
+  printf "\\n$COL_GREEN"▽"$COL_RESET $fmt\\n\n" "$@"
 }
 
 echo_ok() {
-  echo -e "\n\nok $COL_GREEN"▼"$COL_RESET"
+  echo -e "\n\n$COL_GREEN"ok"$COL_RESET"
 }
 
 prompt_password() {
@@ -57,6 +56,7 @@ configure_macos_defaults() {
 
 install_xcode_cli() {
   echo_do "Checking xcode cli tools ..."
+  
   xcode-select -p &> /dev/null
   if [ $? -ne 0 ]; then
     echo_do "Xcode cli tools not found, installing ..."
@@ -70,9 +70,13 @@ install_xcode_cli() {
   else
     echo_do "Xcode cli tools already installed"
   fi
+
+  echo_ok
 }
 
 install_homebrew() {
+  echo_do "Installing Homebrew ..."
+
   local brew_prefix="/usr/local"
 
   if [ -d "$brew_prefix" ]; then
@@ -86,7 +90,6 @@ install_homebrew() {
   fi
 
   if ! command -v brew >/dev/null; then
-    echo_do "Installing Homebrew ..."
     curl -fsS 'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
     export PATH="/usr/local/bin:$PATH"
   else
@@ -107,6 +110,7 @@ install_homebrew() {
 
 update_formulae() {
   echo_do "Install brew formulae"
+
 brew bundle --file=- <<EOF
 cask_args appdir: '/Applications'
 
@@ -133,11 +137,13 @@ cask "java"
 cask "charles"
 cask "spotify"
 EOF
+
   echo_ok
 }
 
 configure_vim() {
   echo_do "Configure vim"
+
   if [ ! -d "$HOME/.vim_runtime" ]; then
     git clone --depth=1 https://github.com/amix/vimrc.git $HOME/.vim_runtime
     sh ~/.vim_runtime/install_awesome_vimrc.sh
@@ -146,11 +152,13 @@ configure_vim() {
   else
     echo_do "Awesome vim already configured ..."
   fi
+
   echo_ok
 }
 
 create_shellconfig() {
   echo_do "Create shell config at ~/shell and source it in ~/.zshrs"
+
 cat <<EOF > $HOME/.shell
 #!/bin/zsh
 
@@ -158,21 +166,25 @@ cat <<EOF > $HOME/.shell
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 EOF
   echo "source $HOME/.shell" > $HOME/.zshrc
+
   echo_ok
 }
 
 install_node() {
   echo_do "Install node with nvm"
+
   curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
   source "$HOME/.zshrc"
   nvm install node
   nvm use node
   nvm alias default node
+
   echo_ok
 }
 
 install_ohmyzsh() {
   echo_do "Install Oh My Zsh"
+
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 }
 
@@ -185,5 +197,3 @@ configure_vim
 create_shellconfig
 install_node
 install_ohmyzsh
-
-echo_ok
