@@ -7,6 +7,34 @@ echo_br() {
   printf "\\n••• $fmt\\n" "$@"
 }
 
+prompt_password() {
+  if ! sudo grep -q "%wheel		ALL=(ALL) NOPASSWD: ALL #atomantic/dotfiles" "/etc/sudoers"; then
+
+    echo_br "Enter your sudo password once for the entire script"
+    sudo -v
+
+    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+  fi
+}
+
+configure_macos_defaults() {
+  defaults write NSGlobalDomain KeyRepeat -int 0                      # ultra keyrepeat
+  defaults write com.apple.dock launchanim -bool false                # don’t animate opening applications from the Dock     
+  defaults write com.apple.dock mineffect -string "scale"             # change minimize/maximize window effect to scale
+  defaults write com.apple.finder AppleShowAllFiles -bool true        # show hidden files by default
+  defaults write com.apple.dock tilesize -int 36                      # set the icon size of Dock items to 36 pixels
+  defaults write com.apple.dock launchanim -bool false                # don’t animate opening applications from the Dock
+  defaults write com.apple.dock autohide -bool true                   # automatically hide and show the Dock
+  defaults write com.apple.dock autohide-delay -float 0               # remove the auto-hiding Dock delay
+  defaults write com.apple.dock expose-animation-duration -float 0.1  # speed up Mission Control animations
+  defaults write com.apple.dashboard mcx-disabled -bool true          # disable dashboard
+  chflags nohidden ~/Library                                          # show the ~/Library folder
+  defaults write com.apple.terminal FocusFollowsMouse -bool true      # hover over a window and start typing in it without clicking first
+  
+  # reset 
+  killall -9 Dock
+}
+
 install_xcode_cli() {
   echo_br "Checking xcode cli tools ..."
   xcode-select -p &> /dev/null
@@ -62,13 +90,11 @@ cask_args appdir: '/Applications'
 tap "homebrew/services"
 tap "caskroom/cask"
 
-brew "git"
 brew "tmux"
 brew "python"
 brew "vim"
 brew "zsh"
 brew "kubernetes-cli"
-brew "nvm"
 brew "mongodb", restart_service: :changed
 brew "redis", restart_service: :changed
 
@@ -76,9 +102,6 @@ cask "google-chrome"
 cask "visual-studio-code"
 cask "webstorm"
 cask "iterm2"
-cask "github"
-cask "alfred"
-cask "amethyst"
 cask "fastlane"
 cask "dropbox"
 cask "docker"
@@ -91,18 +114,45 @@ EOF
 
 configure_vim() {
   if [ ! -d "$HOME/.vim_runtime" ]; then
-    git clone --depth=1 https://github.com/amix/vimrc.git ~/.vim_runtime
+    git clone --depth=1 https://github.com/amix/vimrc.git $HOME/.vim_runtime
     sh ~/.vim_runtime/install_awesome_vimrc.sh
+    git clone https://github.com/VundleVim/Vundle.vim.git $HOME/.vim_runtime/my_plugins/Vundle.vim
+    vim +PluginInstall +qall
   else
     echo_br "Awesome vim already configured ..."
   fi
 }
 
-defaults write NSGlobalDomain KeyRepeat -int 0
+create_shellconfig() {
+cat <<EOF > $HOME/.shell
+#!/bin/zsh
+
+# add commonly used folders to $PATH
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+EOF
+  echo "source $HOME/.shell" > $HOME/.zshrc
+}
+
+install_node() {
+  curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
+  source "$HOME/.zshrc"
+  nvm install node
+  nvm use node
+  nvm alias default node
+}
+
+install_ohmyzsh() {
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+}
+
+prompt_password
+configure_macos_defaults
 install_xcode_cli
 install_homebrew
 update_formulae
 configure_vim
+create_shellconfig
+install_node
+install_ohmyzsh
 
-# install node
-# install ohmyzsh
+echo_br "Done ..."
