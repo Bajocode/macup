@@ -158,10 +158,6 @@ EOF
   echo_ok
 }
 
-# dot() {
-#   /usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME $@
-# }
-
 configure_dotfiles() {
   git clone --bare git@github.com:Bajocode/dotfiles.git $HOME/.dotfiles
   echo ".dotfiles" >> $HOME/.gitignore
