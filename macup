@@ -164,6 +164,7 @@ configure_dotfiles() {
   cp $HOME/.oh-my-zsh/templates/zshrc.zsh-template $HOME/.zshrc
   echo 'source $HOME/.shell\n' | cat - $HOME/.zshrc > temp && mv temp $HOME/.zshrc
   sed -i '' 's/ZSH_THEME="robbyrussell"/ZSH_THEME="refined"/g' $HOME/.zshrc
+  rm -rf $HOME/.dotfiles || true
   git clone --bare https://github.com/Bajocode/dotfiles.git $HOME/.dotfiles
   grep -qxF ".dotfiles" $HOME/.gitignore || echo ".dotfiles" >> $HOME/.gitignore
   dotfiles_do checkout
