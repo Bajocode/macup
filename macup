@@ -2,29 +2,41 @@
 
 trap 'ret=$?; test $ret -ne 0 && printf "macup failed\n\n" >&2; exit $ret' EXIT
 
+SYMBOL=⎇
 ESC_SEQ="\x1b["
 COL_RESET=$ESC_SEQ"39;49;00m"
-COL_GREEN=$ESC_SEQ"32;01m"
-COL_BLUE=$ESC_SEQ"34;01m"
+COL_GREEN=$ESC_SEQ"92;01m"
+COL_CYAN=$ESC_SEQ"96;01m"
+COL_MAGENTA=$ESC_SEQ"95;01m"
 
 echo_do() {
-  local fmt="$1"; shift
-  printf "\\n$COL_BLUE"⦿"$COL_RESET $fmt\\n\n" "$@"
+  echo "\n$COL_CYAN"$SYMBOL"$COL_RESET  Installing $@ ...\n"
+}
+
+echo_done() {
+  echo "\n$COL_GREEN"$SYMBOL"$COL_RESET  Successfully installed $@ !\n"
 }
 
 echo_ok() {
-  echo -e "\n$COL_GREEN"◉"$COL_RESET"
+  echo "\n$COL_MAGENTA"$SYMBOL"$COL_RESET  Already installed $@ ...\n"
+}
+
+echo_plain() {
+  echo "\n$SYMBOL  $1\n"
 }
 
 prompt_password() {
-  echo_do "Enter your sudo password once for the entire script"
+  echo_plain "Enter your sudo password once for the entire script"
+  
   sudo -v
 
   while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 }
 
 configure_macos_defaults() {
-  echo_do "Configuring macOS defaults"
+  local component="macOS defaults"
+
+  echo_do $component
 
   sudo nvram boot-args="-v"                                                               # always boot in verbose mode (not MacOS GUI mode)
   sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist             # allow 'locate' command (track down every instance of a file)
@@ -52,15 +64,16 @@ configure_macos_defaults() {
   defaults write com.apple.terminal FocusFollowsMouse -bool true                          # hover over a window and start typing in it without clicking first
   killall -9 Dock
 
-  echo_ok
+  echo_done $component
 }
 
 install_xcode_cli() {
-  echo_do "Checking xcode cli tools ..."
-  
+  local component="Xcode cli tools"
+
   xcode-select -p &> /dev/null
   if [ $? -ne 0 ]; then
-    echo_do "Xcode cli tools not found, installing ..."
+    echo_do $component
+
     touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress;
     PROD=$(softwareupdate -l |
       grep "\*.*Command Line" |
@@ -68,16 +81,15 @@ install_xcode_cli() {
       sed -e 's/^ *//' |
       tr -d '\n')
     softwareupdate -i "$PROD" -v;
-  else
-    echo_do "Xcode cli tools already installed"
-  fi
 
-  echo_ok
+    echo_done $component
+  else
+    echo_ok $component
+  fi
 }
 
 install_homebrew() {
-  echo_do "Installing Homebrew ..."
-
+  local component="Homebrew"
   local brew_prefix="/usr/local"
 
   if [ -d "$brew_prefix" ]; then
@@ -91,26 +103,27 @@ install_homebrew() {
   fi
 
   if ! command -v brew >/dev/null; then
+    echo_do $component
+
     curl -fsS 'https://raw.githubusercontent.com/Homebrew/install/master/install' | ruby
     export PATH="/usr/local/bin:$PATH"
+
+    echo_done $component
   else
-    echo_do "Homebrew already installed ..."
+    echo_ok $component
   fi
 
   if brew list | grep -Fq brew-cask; then
-    echo_do "Uninstalling old Homebrew-Cask ..."
     brew uninstall --force brew-cask
-  else
-    echo_do "No old Homebrew-Cask to uninstall ..."
   fi
 
   brew update --force
-
-  echo_ok
 }
 
 update_formulae() {
-  echo_do "Install brew formulae"
+  local component="Homebrew formulae"
+
+  echo_do $component
 
 brew bundle --file=- <<EOF
 cask_args appdir: '/Applications'
@@ -131,26 +144,37 @@ brew "kubernetes-cli"
 brew "mongodb", restart_service: :changed
 brew "redis", restart_service: :changed
 
-cask "google-chrome"
+cask "amethyst"
+cask "sizeup"
+cask "virtualbox"
+cask "docker"
+cask "java"
 cask "visual-studio-code"
 cask "webstorm"
 cask "iterm2"
 cask "fastlane"
-cask "dropbox"
-cask "docker"
-cask "virtualbox"
-cask "java"
 cask "charles"
 cask "spotify"
+cask "google-chrome"
+cask "dropbox"
 EOF
 
-  echo_ok
+  echo_done $component
 }
 
 install_vim_awesome() {
-  rm -rf $HOME/.vim_runtime || true
-  git clone --depth=1 https://github.com/amix/vimrc.git $HOME/.vim_runtime
-  sh $HOME/.vim_runtime/install_awesome_vimrc.sh
+  local component="Vim awesome"
+
+  if [ ! -d $HOME/.vim_runtime ]; then
+    echo_do $component
+
+    git clone --depth=1 https://github.com/amix/vimrc.git $HOME/.vim_runtime
+    sh $HOME/.vim_runtime/install_awesome_vimrc.sh
+
+    echo_done $component
+  else
+    echo_ok $component
+  fi
 }
 
 dotfiles_do() {
@@ -158,63 +182,79 @@ dotfiles_do() {
 }
 
 configure_dotfiles() {
-  echo_do "Configure dotfiles"
+  local component="dotfiles"
 
-  git clone https://github.com/robbyrussell/oh-my-zsh.git $HOME/.oh-my-zsh
-  cp $HOME/.oh-my-zsh/templates/zshrc.zsh-template $HOME/.zshrc
-  echo 'source $HOME/.shell\n' | cat - $HOME/.zshrc > temp && mv temp $HOME/.zshrc
-  sed -i '' 's/ZSH_THEME="robbyrussell"/ZSH_THEME="refined"/g' $HOME/.zshrc
-  rm -rf $HOME/.dotfiles || true
-  git clone --bare https://github.com/Bajocode/dotfiles.git $HOME/.dotfiles
-  grep -qxF ".dotfiles" $HOME/.gitignore || echo ".dotfiles" >> $HOME/.gitignore
-  dotfiles_do checkout
-  dotfiles_do config status.showUntrackedFiles no
-  
-  echo_ok
+  if [ ! -d $HOME/.dotfiles ]; then
+    echo_do $component
+
+    git clone https://github.com/robbyrussell/oh-my-zsh.git $HOME/.oh-my-zsh
+    cp $HOME/.oh-my-zsh/templates/zshrc.zsh-template $HOME/.zshrc
+    echo 'source $HOME/.shell\n' | cat - $HOME/.zshrc > temp && mv temp $HOME/.zshrc
+    sed -i '' 's/ZSH_THEME="robbyrussell"/ZSH_THEME="refined"/g' $HOME/.zshrc
+    rm -rf $HOME/.dotfiles || true
+    git clone --bare https://github.com/Bajocode/dotfiles.git $HOME/.dotfiles
+    grep -qxF ".dotfiles" $HOME/.gitignore || echo ".dotfiles" >> $HOME/.gitignore
+    dotfiles_do checkout
+    dotfiles_do config status.showUntrackedFiles no
+
+    echo_done $component
+  else
+    echo_ok $component
+  fi
 }
 
 install_node() {
-  echo_do "Install node with nvm"
+  local component="Node with nvm"
 
-  curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | zsh
-  NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-  [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
-  nvm install node
-  nvm use node
-  nvm alias default node
+  if [ ! -d $HOME/.nvm ]; then
+    echo_do $component
 
-  echo_ok
+    curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | zsh
+    NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+    nvm install node
+    nvm use node
+    nvm alias default node
+
+    echo_done $component
+  else
+    echo_ok $component
+  fi
 }
 
 install_vim_plugins() {
-  echo_do "Configure vim"
+  local component="Vim plugins"
 
-  git clone https://github.com/VundleVim/Vundle.vim.git $HOME/.vim_runtime/my_plugins/Vundle.vim
-  vim +PluginInstall +qall
+  echo_do $component
+  
+  curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   npm i -g typescript
-  $HOME/.vim/bundle/YouCompleteMe/install.py --all
+  vim +PlugInstall +qall
 
-  echo_ok
+  echo_done $component
 }
 
 reload_shell() {
-  echo_do "Change default shell to Zsh"
-
+  local component="Zsh"
   local current_shell=$(basename "$SHELL")
 
   if [ "$current_shell" != "zsh" ]; then
+    echo_do $component
+
     if hash chsh >/dev/null 2>&1; then
       chsh -s $(grep /zsh$ /etc/shells | tail -1)
     else
       echo_do "Unable to change shell automatically because this system has no chsh"
       echo_do "Please manually change your default shell to zsh"
     fi
+
+    echo_done $component
+    
+    zsh
+  else 
+    echo_ok $component
   fi
-
-  zsh
-
-  echo_ok
 }
 
 prompt_password
