@@ -39,7 +39,6 @@ configure_macos_defaults() {
   echo_do $component
 
   sudo nvram boot-args="-v"                                                               # always boot in verbose mode (not MacOS GUI mode)
-  sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist             # allow 'locate' command (track down every instance of a file)
   defaults write com.apple.LaunchServices LSQuarantine -bool false                        # disable the “Are you sure you want to open this application?" dialog
   chflags nohidden $HOME/Library                                                          # show the $HOME/Library folder
   defaults write com.apple.finder AppleShowAllFiles -bool true                            # show hidden files by default
@@ -52,7 +51,7 @@ configure_macos_defaults() {
   defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false           # disable smart quotes as they’re annoying when typing code
   defaults -currentHost write com.apple.screensaver idleTime 0                            # disable screensaver
   defaults write NSGlobalDomain com.apple.springing.enabled -bool true                    # enable spring loading for directories
-  defaults write NSGlobalDomain com.apple.springing.delay -float 0                        # remove the spring loading delay for directories
+  defaults write NSGlobalDomain com.apple.springing.delay -float 1                        # remove the spring loading delay for directories
   defaults write com.apple.dock launchanim -bool false                                    # don’t animate opening applications from the Dock     
   defaults write com.apple.dock mineffect -string "scale"                                 # change minimize/maximize window effect to scale
   defaults write com.apple.dock tilesize -int 36                                          # set the icon size of Dock items to 36 pixels
