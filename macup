@@ -139,6 +139,7 @@ brew "jupyter"
 brew "vim"
 brew "kubernetes-cli"
 brew "kubernetes-helm"
+brew "kubectx"
 brew "kube-ps1"
 brew "stern"
 
