@@ -139,6 +139,8 @@ brew "jupyter"
 brew "vim"
 brew "kubernetes-cli"
 brew "kubernetes-helm"
+brew "kube-ps1"
+brew "stern"
 
 cask "amethyst"
 cask "virtualbox"
@@ -188,7 +190,8 @@ configure_dotfiles() {
     rm -rf $HOME/.dotfiles || true
     git clone --bare https://github.com/Bajocode/dotfiles.git $HOME/.dotfiles
     grep -qxF ".dotfiles" $HOME/.gitignore || echo ".dotfiles" >> $HOME/.gitignore
-    dotfiles_do checkout
+    touch $HOME/.alias.local
+    dotfiles_do checkout -f
     dotfiles_do config status.showUntrackedFiles no
 
     echo_done $component
