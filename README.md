@@ -43,7 +43,7 @@ less ~/macup.log
 * cask "google-chrome"
 * cask "dropbox"
 
-* ### Tools
+### Tools
 * brew "python"
 * brew "go"
 * brew "cmake"
