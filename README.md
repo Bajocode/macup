@@ -13,13 +13,13 @@ curl --remote-name https://raw.githubusercontent.com/Bajocode/macup/master/macup
 Review the script:
 
 ```sh
-less mac
+less macup
 ```
 
 Execute the downloaded script:
 
 ```sh
-sh mac 2>&1 | tee ~/macup.log
+sh macup 2>&1 | tee ~/macup.log
 ```
 
 Optionally, review the log:
