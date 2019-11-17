@@ -38,31 +38,28 @@ configure_macos_defaults() {
 
   echo_do $component
 
-  sudo nvram boot-args="-v"                                                               # always boot in verbose mode (not MacOS GUI mode)
-  defaults write com.apple.LaunchServices LSQuarantine -bool false                        # disable the “Are you sure you want to open this application?" dialog
-  chflags nohidden $HOME/Library                                                          # show the $HOME/Library folder
-  defaults write com.apple.finder AppleShowAllFiles -bool true                            # show hidden files by default
-  defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false              # disable the warning when changing a file extension
-  defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true   # enable tap to click for this user and for the login screen
-  defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1           # ^
-  defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1                        # ^
-  defaults write NSGlobalDomain KeyRepeat -int 2                                          # ultra keyrepeat
-  defaults write NSGlobalDomain InitialKeyRepeat -int 10                                  # ^      
-  defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false           # disable smart quotes as they’re annoying when typing code
-  defaults -currentHost write com.apple.screensaver idleTime 0                            # disable screensaver
-  defaults write NSGlobalDomain com.apple.springing.enabled -bool true                    # enable spring loading for directories
-  defaults write NSGlobalDomain com.apple.springing.delay -float 1                        # remove the spring loading delay for directories
-  defaults write com.apple.dock launchanim -bool false                                    # don’t animate opening applications from the Dock     
-  defaults write com.apple.dock mineffect -string "scale"                                 # change minimize/maximize window effect to scale
-  defaults write com.apple.dock tilesize -int 36                                          # set the icon size of Dock items to 36 pixels
-  defaults write com.apple.dock launchanim -bool false                                    # don’t animate opening applications from the Dock
-  defaults write com.apple.dock autohide -bool true                                       # automatically hide and show the Dock
-  defaults write com.apple.dock autohide-delay -float 0                                   # remove the auto-hiding Dock delay
-  defaults write com.apple.dock expose-animation-duration -float 0.1                      # speed up Mission Control animations
-  defaults write com.apple.dashboard mcx-disabled -bool true                              # disable dashboard
-  defaults write com.apple.terminal FocusFollowsMouse -bool true                          # hover over a window and start typing in it without clicking first
+  # always boot in verbose mode (not MacOS GUI mode)
+  sudo nvram boot-args="-v"
+  # disable the “Are you sure you want to open this application?" dialog
+  defaults write com.apple.LaunchServices LSQuarantine -bool false                        
+  # show the $HOME/Library folder
+  chflags nohidden $HOME/Library                                                          
+  # show hidden files by default
+  defaults write com.apple.finder AppleShowAllFiles -bool true                            
+  # don’t animate opening applications from the Dock
+  defaults write com.apple.dock launchanim -bool false                                    
+  # set the icon size of Dock items to 36 pixels
+  defaults write com.apple.dock tilesize -int 36                                          
+  # automatically hide and show the Dock
+  defaults write com.apple.dock autohide -bool true                                       
+  # remove the auto-hiding Dock delay
+  defaults write com.apple.dock autohide-delay -float 0                                   
+  # speed up Mission Control animations
+  defaults write com.apple.dock expose-animation-duration -float 0.1
+  # disable dashboard
+  defaults write com.apple.dashboard mcx-disabled -bool true
+  
   killall -9 Dock
-
   echo_done $component
 }
 
@@ -134,7 +131,6 @@ brew "python"
 brew "go"
 brew "cmake"
 brew "zsh"
-brew "tmux"
 brew "jupyter"
 brew "vim"
 brew "kubernetes-cli"
@@ -143,13 +139,11 @@ brew "kubectx"
 brew "kube-ps1"
 brew "stern"
 
-cask "spectacle"
-cask "amethyst"
+cask "java"
 cask "virtualbox"
 cask "docker"
-cask "java"
 cask "visual-studio-code"
-cask "webstorm"
+cask "spectacle"
 cask "iterm2"
 cask "fastlane"
 cask "spotify"
@@ -264,5 +258,5 @@ update_formulae
 install_vim_awesome
 configure_dotfiles
 install_node
-install_vim_plugins
+# install_vim_plugins
 reload_shell
