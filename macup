@@ -120,7 +120,6 @@ brew bundle --file=- <<EOF
 cask_args appdir: '/Applications'
 
 tap "homebrew/services"
-tap "caskroom/cask"
 
 brew "python"
 brew "go"
