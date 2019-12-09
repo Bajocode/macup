@@ -27,29 +27,3 @@ Optionally, review the log:
 ```sh
 less ~/macup.log
 ```
-
-## Installed components
-
-### Apps
-* cask "amethyst"
-* cask "virtualbox"
-* cask "docker"
-* cask "java"
-* cask "visual-studio-code"
-* cask "webstorm"
-* cask "iterm2"
-* cask "fastlane"
-* cask "spotify"
-* cask "google-chrome"
-* cask "dropbox"
-
-### Tools
-* brew "python"
-* brew "go"
-* brew "cmake"
-* brew "zsh"
-* brew "tmux"
-* brew "jupyter"
-* brew "vim"
-* brew "kubernetes-cli"
-* brew "kubernetes-helm"
