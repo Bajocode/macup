@@ -1,6 +1,6 @@
 # Macup
 
-Macup is a script to setup a macOS macup for web, mobile and infrastructure development. It installs apps, dotfiles and configures macOS root configuration settings
+A setup script for macOS with personal apps and configurations
 
 ## Install
 
