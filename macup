@@ -220,6 +220,8 @@ reload_shell() {
   else 
     echo_ok $component
   fi
+
+  exec $SHELL
 }
 
 prompt_password
