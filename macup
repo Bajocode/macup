@@ -2,7 +2,6 @@
 
 trap 'ret=$?; test $ret -ne 0 && printf "macup failed\n\n" >&2; exit $ret' EXIT
 
-SYMBOL=⎇
 ESC_SEQ="\x1b["
 COL_RESET=$ESC_SEQ"39;49;00m"
 COL_GREEN=$ESC_SEQ"92;01m"
@@ -10,19 +9,19 @@ COL_CYAN=$ESC_SEQ"96;01m"
 COL_MAGENTA=$ESC_SEQ"95;01m"
 
 echo_do() {
-  echo "\n$COL_CYAN"$SYMBOL"$COL_RESET  Installing $@ ...\n"
+  echo "\n$COL_CYAN  Installing $@ ...$COL_RESET\n"
 }
 
 echo_done() {
-  echo "\n$COL_GREEN"$SYMBOL"$COL_RESET  Successfully installed $@ !\n"
+  echo "\n$COL_GREEN  Successfully installed $@ !$COL_RESET\n"
 }
 
 echo_ok() {
-  echo "\n$COL_MAGENTA"$SYMBOL"$COL_RESET  Already installed $@ ...\n"
+  echo "\n$COL_MAGENTA  Already installed $@ ...$COL_RESET\n"
 }
 
 echo_plain() {
-  echo "\n$SYMBOL  $1\n"
+  echo "\n$1\n"
 }
 
 prompt_password() {
@@ -40,8 +39,6 @@ configure_macos_defaults() {
 
   # always boot in verbose mode (not MacOS GUI mode)
   sudo nvram boot-args="-v"
-  # disable the “Are you sure you want to open this application?" dialog
-  defaults write com.apple.LaunchServices LSQuarantine -bool false                        
   # show the $HOME/Library folder
   chflags nohidden $HOME/Library                                                          
   # show hidden files by default
@@ -54,10 +51,6 @@ configure_macos_defaults() {
   defaults write com.apple.dock autohide -bool true                                       
   # remove the auto-hiding Dock delay
   defaults write com.apple.dock autohide-delay -float 0                                   
-  # speed up Mission Control animations
-  defaults write com.apple.dock expose-animation-duration -float 0.1
-  # disable dashboard
-  defaults write com.apple.dashboard mcx-disabled -bool true
   
   killall -9 Dock
   echo_done $component
@@ -131,21 +124,16 @@ brew "python"
 brew "go"
 brew "cmake"
 brew "zsh"
-brew "jupyter"
 brew "vim"
 brew "kubernetes-cli"
-brew "kubernetes-helm"
 brew "kubectx"
 brew "kube-ps1"
 brew "stern"
 
-cask "java"
-cask "virtualbox"
 cask "docker"
 cask "visual-studio-code"
-cask "spectacle"
+cask "rectangle"
 cask "iterm2"
-cask "fastlane"
 cask "spotify"
 cask "google-chrome"
 cask "dropbox"
@@ -169,31 +157,14 @@ install_vim_awesome() {
   fi
 }
 
-dotfiles_do() {
-  /usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME $@
-}
+install_ohmyzsh() {
+  local component="ohmyzsh"
 
-configure_dotfiles() {
-  local component="dotfiles"
+  echo_do $component
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+  sed -i '' 's/ZSH_THEME="robbyrussell"/ZSH_THEME="refined"/g' $HOME/.zshrc
 
-  if [ ! -d $HOME/.dotfiles ]; then
-    echo_do $component
-
-    git clone https://github.com/robbyrussell/oh-my-zsh.git $HOME/.oh-my-zsh
-    cp $HOME/.oh-my-zsh/templates/zshrc.zsh-template $HOME/.zshrc
-    echo 'source $HOME/.shell\n' | cat - $HOME/.zshrc > temp && mv temp $HOME/.zshrc
-    sed -i '' 's/ZSH_THEME="robbyrussell"/ZSH_THEME="refined"/g' $HOME/.zshrc
-    rm -rf $HOME/.dotfiles || true
-    git clone --bare https://github.com/Bajocode/dotfiles.git $HOME/.dotfiles
-    grep -qxF ".dotfiles" $HOME/.gitignore || echo ".dotfiles" >> $HOME/.gitignore
-    touch $HOME/.alias.local
-    dotfiles_do checkout -f
-    dotfiles_do config status.showUntrackedFiles no
-
-    echo_done $component
-  else
-    echo_ok $component
-  fi
+  echo_done $component
 }
 
 install_node() {
@@ -209,23 +180,10 @@ install_node() {
     nvm install 'lts/*'
     nvm alias default 'lts/*'
 
-    npm i -g typescript
-
     echo_done $component
   else
     echo_ok $component
   fi
-}
-
-install_vim_plugins() {
-  local component="Vim plugins"
-
-  echo_do $component
-  
-  curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  vim +PlugInstall +qall
-
-  echo_done $component
 }
 
 reload_shell() {
@@ -256,7 +214,6 @@ install_xcode_cli
 install_homebrew
 update_formulae
 install_vim_awesome
-configure_dotfiles
+install_ohmyzsh
 install_node
-# install_vim_plugins
 reload_shell
