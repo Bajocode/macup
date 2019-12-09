@@ -45,6 +45,8 @@ configure_macos_defaults() {
   defaults write com.apple.finder AppleShowAllFiles -bool true                            
   # don’t animate opening applications from the Dock
   defaults write com.apple.dock launchanim -bool false                                    
+  # dock orientation: 'left', 'bottom', 'right'
+  defaults write com.apple.dock 'orientation' -string 'left'
   # set the icon size of Dock items to 36 pixels
   defaults write com.apple.dock tilesize -int 36                                          
   # automatically hide and show the Dock
