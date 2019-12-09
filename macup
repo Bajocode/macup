@@ -53,6 +53,11 @@ configure_macos_defaults() {
   defaults write com.apple.dock autohide -bool true                                       
   # remove the auto-hiding Dock delay
   defaults write com.apple.dock autohide-delay -float 0                                   
+  # keyrepeat speed
+  defaults write NSGlobalDomain KeyRepeat 2
+  defaults write NSGlobalDomain InitialKeyRepeat 15
+  # trackpad speed
+  defaults read -g com.apple.trackpad.scaling 1.5
   
   killall -9 Dock
   echo_done $component
