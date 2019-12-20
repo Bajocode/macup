@@ -53,13 +53,6 @@ configure_macos_defaults() {
   defaults write com.apple.dock autohide -bool true                                       
   # remove the auto-hiding Dock delay
   defaults write com.apple.dock autohide-delay -float 0                                   
-  # keyrepeat speed
-  defaults write NSGlobalDomain KeyRepeat 2
-  defaults write NSGlobalDomain InitialKeyRepeat 15
-  # trackpad speed
-  defaults read -g com.apple.trackpad.scaling 1.5
-  # disable ui sounds
-  defaults write com.apple.systemsound "com.apple.sound.uiaudio.enabled" -int 0
   # disable the “Are you sure you want to open this application?" dialog
   defaults write com.apple.LaunchServices LSQuarantine -bool false                        
   # speed up Mission Control animations
