@@ -147,6 +147,7 @@ cask "iterm2"
 cask "spotify"
 cask "google-chrome"
 cask "dropbox"
+cask "vlc"
 EOF
 
   echo_done $component
